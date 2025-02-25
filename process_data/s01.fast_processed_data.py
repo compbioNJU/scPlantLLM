@@ -125,7 +125,6 @@ def process_gene_expression(gene_counts_file_path, cell_type_file, batch_effect_
                             gene_expression[:len(sampled_genes)] = row[sampled_genes].values
                             gene_expression_list.append(gene_expression)
 
-                            gene_names_list.append(sampled_genes + [pad_token] * (seq_length - len(sampled_genes)))
 
                             gene_ids = [gene_vocab.get(gene_name, pad_token_id) for gene_name in sampled_genes]
                             gene_id_array = np.full(seq_length, pad_token_id)
@@ -139,7 +138,6 @@ def process_gene_expression(gene_counts_file_path, cell_type_file, batch_effect_
                         gene_expression = np.full(seq_length, pad_value)
                         gene_expression[:len(non_zero_genes)] = row[non_zero_genes].values
                         gene_expression_list.append(gene_expression)
-                        gene_names_list.append(non_zero_genes + [pad_token] * (seq_length - len(non_zero_genes)))
 
                         gene_ids = [gene_vocab.get(gene_name, pad_token_id) for gene_name in non_zero_genes]
                         gene_id_array = np.full(seq_length, pad_token_id)
@@ -156,7 +154,6 @@ def process_gene_expression(gene_counts_file_path, cell_type_file, batch_effect_
                     gene_expression[:len(row)] = row.drop(['cell_type', 'batch_effect']).values
                     gene_expression_list.append(gene_expression)
 
-                    gene_names_list.append(row.drop(['cell_type', 'batch_effect']).index.tolist() + [pad_token] * (seq_length - len(row)))
 
                     gene_ids = [gene_vocab.get(gene_name, pad_token_id) for gene_name in row.drop(['cell_type', 'batch_effect']).index]
                     gene_id_array = np.full(seq_length, pad_token_id)
@@ -174,9 +171,6 @@ def process_gene_expression(gene_counts_file_path, cell_type_file, batch_effect_
     logger.info("Start converting gene expression to DataFrame...")
     gene_expression_df = pd.DataFrame(gene_expression_list, index=idx_list)
     
-    logger.info("Start converting gene names to DataFrame...")
-    gene_names_df = pd.DataFrame(gene_names_list, index=idx_list)
-    
     logger.info("Start converting cell type and batch effect to DataFrame...")
     cell_type_df = pd.DataFrame({'cell_type': cell_type_list}, index=idx_list)
     batch_effect_df = pd.DataFrame({'batch_effect': batch_effect_list}, index=idx_list)
@@ -184,17 +178,12 @@ def process_gene_expression(gene_counts_file_path, cell_type_file, batch_effect_
     logger.info("Start converting gene id to DataFrame...")
     gene_id_df = pd.DataFrame(gene_id_list, index=idx_list)
     
-    logger.info("Start filling missing values in dataframe...")
-    gene_names_df.fillna(pad_token, inplace=True)  # 填充缺失值
-    gene_names_df = gene_names_df.apply(lambda x: x.astype(str), axis=1)  # 将基因名转换为字符串
-    
     logger.info("Start mapping cell type and batch effect...")
     cell_type_df["cell_label"] = cell_type_df["cell_type"].map(celltype_vocab)
     batch_effect_df["batch_id"] = batch_effect_df["batch_effect"].map(batch_effect_vocab)
     
     logger.info("Start saving processed data...")
     gene_expression_df.to_csv(os.path.join(out_path, "gene_expression_matrix.csv"), index=True)
-    gene_names_df.to_csv(os.path.join(out_path, "gene_names_df.csv"), index=True)
     cell_type_df.to_csv(os.path.join(out_path, "cell_type_df.csv"), index=True)
     batch_effect_df.to_csv(os.path.join(out_path, "batch_effect_df.csv"), index=True)
     gene_id_df.to_csv(os.path.join(out_path, "gene_id_df.csv"), index=True)
