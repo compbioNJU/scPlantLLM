@@ -62,7 +62,6 @@ def process_gene_expression(gene_counts_file_path, cell_type_file, batch_effect_
     logger.debug("Start processing gene expression data...")
 
     gene_expression_list = []
-    gene_names_list = []
     cell_type_list = []
     batch_effect_list = []
     gene_id_list = []
