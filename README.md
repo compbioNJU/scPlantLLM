@@ -98,3 +98,13 @@ The model usage is detailed in the tutorial notebook:
 ```bash
 Tutorial.ipynb
 ```
+
+## Citation
+
+```shell
+@article{scPlantLLM,
+  title={Harnessing the foundation model for exploration of single-cell expression atlases in plants},
+  author={},
+  year={2025},
+  }
+```
