@@ -30,7 +30,7 @@ from sklearn.preprocessing import LabelEncoder
 import plotly.graph_objects as go
 import plotly.io as pio
 
-def  cell_type_metrics(predictions, celltypes_labels):
+def cell_type_metrics(predictions, celltypes_labels):
     accuracy = accuracy_score(celltypes_labels, predictions)
     precision = precision_score(celltypes_labels, predictions, average="macro",  zero_division=1)
     recall = recall_score(celltypes_labels, predictions, average="macro",  zero_division=1)
@@ -92,20 +92,7 @@ def read_data_from_hdf5(file_path):
 
 
 def load_all_chunks(output_path, dtype, start_chunk, num_chunks, end_chunk=None, logger=None):
-    """
-    Load data chunks from HDF5 files and combine them into a single dataset.
 
-    Parameters:
-        output_path (str): The path to the directory containing HDF5 files.
-        dtype (str): The type of data to load (train/valid/test).
-        start_chunk (int): The index of the first chunk to load (starting from 1).
-        num_chunks (int): The number of chunks to load.
-        end_chunk (int, optional): The index of the last chunk to load. If not specified, it is calculated based on start_chunk and num_chunks.
-        logger (Logger): The logger object for logging messages.
-
-    Returns:
-        dict: A dictionary containing the combined data from all chunks.
-    """
     combined_data = {}
     
     # Determine end_chunk if not specified
@@ -133,7 +120,6 @@ def load_all_chunks(output_path, dtype, start_chunk, num_chunks, end_chunk=None,
     return combined_data
 
 
-
 class CustomDataset(Dataset):
     def __init__(self, file_path, data_type='train', start_chunk=1, num_chunks=None, end_chunk=None, vocab=None, append_cls=True, cls_token='<cls>', logger=None):
         
@@ -150,24 +136,24 @@ class CustomDataset(Dataset):
 #         with h5py.File(file_path, 'r') as h5file:
         h5file = load_all_chunks(file_path, data_type, start_chunk, num_chunks, end_chunk, logger)
         data =  {
-                'expressions': np.array(h5file[f'ex_{data_type}']).astype(np.float32),
-                'gene_ids': np.array(h5file[f'gid_{data_type}']).astype(np.float32),
-                'cell_types': np.array(h5file[f'ctype_{data_type}']).astype(np.float32),
-                'batch_effects': np.array(h5file[f'batch_{data_type}']).astype(np.float32),
+                'expressions': np.array(h5file[f'ex']).astype(np.float32),
+                'gene_ids': np.array(h5file[f'gid']).astype(np.float32),
+                'cell_types': np.array(h5file[f'major_ctype']).astype(np.float32) if 'major_ctype' in h5file else None,
+                'batch_effects': np.array(h5file[f'batch']).astype(np.float32),
             }
         if logger is not None:
             logger.info(f"Transformed {data_type} data from h5file to numpy array.")    
         metadata ={
-            'cell_names' : np.array(h5file[f'cell_index_{data_type}']),
+            'cell_names' : np.array(h5file[f'cell_index']),
             # 'gene_names' : np.array(h5file[f'gname_{data_type}']),
-            'cell_types' : np.array(h5file[f'ctype_{data_type}']).astype(np.float32),
+            'cell_types' : np.array(h5file[f'major_ctype']).astype(np.float32) if 'major_ctype' in h5file else None,
             }
             
         if append_cls:
             if vocab is not None:
                 cls_id = vocab[cls_token]
             else:
-                cls_id = 185621 ##究极bug!!! gene_id扩充了  new:185621 old:45414
+                cls_id = 185621 
             data['expressions'] = np.insert(data['expressions'], 0, 0, axis=1)        
             data['gene_ids'] = np.insert(data['gene_ids'], 0, cls_id, axis=1)
         return data, metadata
@@ -176,38 +162,17 @@ class CustomDataset(Dataset):
         return len(self.data['expressions'])
 
     def __getitem__(self, index):
-        data_item = {key: torch.tensor(value[index]) for key, value in self.data.items()}
+        data_item = {}
+        for key, value in self.data.items():
+            if value is not None: 
+                data_item[key] = torch.tensor(value[index])
         cell_name = self.metadata['cell_names'][index]
         cell_index = self.cell_name_to_index[cell_name]
         return data_item , cell_index
 
 
 def data_loader(file_path, data_type='train', gene_vocab =None, start_chunk=1, num_chunks=None, end_chunk=None, batch_size=64, num_workers=1, pin_memory=True,  shuffle=False, drop_last=True, logger=None, append_cls=True, parallel=False):
-    '''
-    file_path: str, path to the hdf5 file
-    batch_size: int, batch size
-    shuffle: bool, shuffle the data or not
-    drop_last: bool, drop the last batch or not
-    num_workers: int, number of workers
-    pin_memory: bool, pin memory or not
-    
-    return dataloader: expression, gene_id, gene_name, cell_type, batch_effect, cell_index
-    
-    For example:
-    train_sampler, train_loader, train_metadata = data_loader(train_file_path, data_type='train')
-    for index, data in enumerate(train_loader):
-        batch =data[0]
-        cell_index = data[1]
-        expressions = batch['expressions']      
-        gene_ids = batch['gene_ids']    
-        gene_names = batch['gene_names']      
-        cell_types = batch['cell_types']    
-         
-        cell_name = metadata['cell_names'][cell_index]
-        cell_name = [byte_string.decode('utf-8') for byte_string in cell_name]
-        cell_names.extend(cell_name)  
-
-    '''
+ 
     if num_chunks is None and end_chunk is None:
         raise ValueError("At least one of num_chunks or end_chunk must be provided.")
         
@@ -1056,6 +1021,106 @@ def test(
             },
         )
         print(f"test/accuracy: {accuracy}, test/precision: {precision}, test/recall: {recall}, test/macro_f1: {macro_f1}, test/micro_f1: {micro_f1}")
+        probabilities = np.concatenate(probabilities, axis=0)
+        
+        return cell_types_predictions, cell_types_labels, cell_names, probabilities, cell_embeddings, batch_labels_list
+    
+def inference(
+    model: nn.Module,
+    loader: DataLoader,
+    metadata,
+    device,
+    config,
+    epoch=0,
+):
+    """
+    Evaluate the model on the evaluation data.
+    """
+    model.eval()
+    total_err = 0.0
+    total_acc = 0.0
+    total_num = 0
+    cell_types_predictions = []
+    cell_types_labels = []
+    cell_names = []
+    probabilities = []
+    cell_embeddings_list = []
+    batch_labels_list = []
+    log_interval = 100
+    with torch.no_grad():
+        num_batches = len(loader)
+        for batch, data in enumerate(loader):
+            batch_data = data[0]
+            cell_index = data[1]
+            input_gene_ids = batch_data["gene_ids"].to(device).long()
+            target_values = batch_data["expressions"]#.to(device)
+            batch_labels = batch_data["batch_effects"].to(device).long()
+            batch_labels = torch.squeeze(batch_labels)
+            batch_labels_list.extend(batch_labels.cpu().numpy())
+            
+            cell_name = metadata['cell_names'][cell_index]
+            cell_name = [byte_string.decode('utf-8') for byte_string in cell_name]
+            cell_names.extend(cell_name)
+            
+            if config.input_emb_style == "category":
+                pad_value = config.n_bins
+                mask_value = config.mask_value + 1
+                target_values[target_values == config.pad_value] = pad_value
+            else:
+                pad_value = config.pad_value
+                mask_value = config.mask_value
+  
+            if config.task == "annotation":
+                input_values = target_values
+                
+            target_values = target_values#.to(device)
+            input_values = input_values.to(device)
+            src_key_padding_mask = input_gene_ids.eq(config.pad_token_id)
+            
+            with torch.cuda.amp.autocast(enabled=config.amp):
+                output_dict = model(
+                    input_gene_ids,
+                    input_values,
+                    src_key_padding_mask=src_key_padding_mask,
+                    batch_labels=batch_labels
+                    if config.use_batch_labels or config.DSBN
+                    else None,
+                    CLS=config.CLS,  # evaluation does not need CLS or CCE
+                    MVC=False,
+                    ECS=False,
+                )
+            
+            with torch.cuda.amp.autocast(enabled=config.amp):
+                cell_embeddings = model.encode_batch(
+                input_gene_ids,
+                input_values,
+                src_key_padding_mask=src_key_padding_mask,
+                batch_size=input_gene_ids.shape[0],
+                batch_labels=torch.from_numpy(batch_labels).long() if config.DSBN else None,
+                time_step=0,
+                return_np=True,
+            )
+                cell_embeddings = cell_embeddings / np.linalg.norm(cell_embeddings, axis=1, keepdims=True)
+                cell_embeddings_list.append(cell_embeddings)
+                
+                loss = 0.0
+                metrics_to_log = {}
+                # when fine-tuning, meeds setting CLS or GEP to False
+                if config.task == "annotation" or config.CLS:
+                    output_value = output_dict["cls_output"] #torch.Size([B, n_ctype])
+                    probability = F.softmax(output_value, dim=1)
+                    probabilities.append(probability.detach().cpu().numpy()) 
+                    output_value = output_value.argmax(1) 
+                    cell_types_prediction = output_value.cpu().numpy()
+                    cell_types_predictions.extend(cell_types_prediction)
+
+
+
+            total_num += len(input_gene_ids)
+        
+            wandb.log(metrics_to_log)
+    cell_embeddings = np.concatenate(cell_embeddings_list, axis=0)
+    if config.task == "annotation":
         probabilities = np.concatenate(probabilities, axis=0)
         
         return cell_types_predictions, cell_types_labels, cell_names, probabilities, cell_embeddings, batch_labels_list
