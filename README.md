@@ -102,9 +102,16 @@ Tutorial.ipynb
 ## Citation
 
 ```shell
-@article{scPlantLLM,
-  title={Harnessing the foundation model for exploration of single-cell expression atlases in plants},
-  author={},
-  year={2025},
-  }
+@article{10.1093/gpbjnl/qzaf024,
+    author = {Cao, Guangshuo and Chao, Haoyu and Zheng, Wenqi and Lan, Yangming and Lu, Kaiyan and Wang, Yueyi and Chen, Ming and Zhang, He and Chen, Dijun},
+    title = {Harnessing the Foundation Model for Exploration of Single-cell Expression Atlases in Plants},
+    journal = {Genomics, Proteomics & Bioinformatics},
+    pages = {qzaf024},
+    year = {2025},
+    month = {03},
+    issn = {1672-0229},
+    doi = {10.1093/gpbjnl/qzaf024},
+    url = {https://doi.org/10.1093/gpbjnl/qzaf024},
+}
+
 ```
