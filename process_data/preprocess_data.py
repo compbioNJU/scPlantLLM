@@ -318,8 +318,7 @@ def process_gene_expression(gene_counts_file_path, cell_type_file, gene_vocab_fi
 
 if __name__ == '__main__':
 
-    project_path = '/media/workspace/caoguangshuo/scPlantGPT'
-    config = load_config(f'{project_path}/s03_scPlantGPT/cross_data/config.json')
+    config=load_config('./../setting.json')
     
     parser = argparse.ArgumentParser()
     parser.add_argument('--input_path', type=str, help='Path to the data folder')
