@@ -29,6 +29,48 @@ from sklearn.metrics import confusion_matrix
 from sklearn.preprocessing import LabelEncoder
 import plotly.graph_objects as go
 import plotly.io as pio
+import datetime
+
+def setup_custom_logger(logger_name, log_path):
+    '''
+    logger_name: str, name of the logger
+    log_path: str, path to save the log file
+    return: logger
+    '''
+    timestamp = datetime.now().strftime("%yY%mM%dD%HH%MM")
+    log_file = os.path.join(log_path, f"{logger_name}_{timestamp}.log")
+    formatter = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(module)s - %(message)s')
+
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+
+    if not os.path.isfile(log_file):
+        open(log_file, "w").close()
+    fhlr = logging.FileHandler(log_file)
+    fhlr.setFormatter(formatter)
+    
+    logger = logging.getLogger(logger_name)
+    logger.handlers.clear()
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
+    logger.addHandler(fhlr)
+    return logger
+
+
+def set_seed(seed=1234):
+    '''
+    seed: int, random seed
+    '''
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():  # GPU operation have separate seed
+        random.seed(seed)
+        os.environ['PYTHONHASHSEED'] = str(seed)
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)  # if you are using multi-GPU.
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.enabled = False
 
 def cell_type_metrics(predictions, celltypes_labels):
     accuracy = accuracy_score(celltypes_labels, predictions)
