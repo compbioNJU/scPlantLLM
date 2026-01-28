@@ -1,0 +1,15 @@
+{
+    "S phase": 0,
+    "Root cortex": 1,
+    "Unknow": 2,
+    "Lateral root cap": 3,
+    "Root cap": 4,
+    "Columella root cap": 5,
+    "Non-hair": 6,
+    "Root stele": 7,
+    "Root endodermis": 8,
+    "Root hair": 9,
+    "G1/G0 phase": 10,
+    "Xylem": 11,
+    "Phloem": 12
+}

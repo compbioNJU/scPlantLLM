@@ -24,12 +24,12 @@ except ImportError:
     flash_attn_available = False
 
 sys.path.insert(0, "../")
-from ..utils import set_seed, setup_custom_logger
+from utils import set_seed, setup_custom_logger
 
 seed = 1234
 set_seed(1234)
 
-logger = setup_custom_logger("L03.train", './../Log/')
+logger = setup_custom_logger("L03.train", './log/')
 
 # ref https://github.com/bowang-lab/scGPT/blob/main/scgpt/model/model.py
 class TransformerModel(nn.Module):
@@ -198,6 +198,15 @@ class TransformerModel(nn.Module):
             cell_emb = F.normalize(cell_emb, p=2, dim=1)  # (batch, embsize)
 
         return cell_emb
+    
+    def _check_batch_labels(self, batch_labels: Tensor) -> None:
+        if self.use_batch_labels:
+            assert batch_labels is not None
+        elif batch_labels is not None:
+            raise ValueError(
+                "batch_labels should only be provided when `self.use_batch_labels`"
+                " or `self.domain_spec_batchnorm` is True"
+            )
 
     def generate(
         self,

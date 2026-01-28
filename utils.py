@@ -8,7 +8,7 @@ import traceback
 import h5py
 import numpy as np
 from typing import Dict, Iterable, List, Optional, Tuple, Union
-from loss import masked_relative_error, criterion_neg_log_bernoulli
+from loss import masked_relative_error
 from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.nn.functional as F
 import wandb
@@ -29,7 +29,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.preprocessing import LabelEncoder
 import plotly.graph_objects as go
 import plotly.io as pio
-import datetime
+from datetime import datetime
 
 def setup_custom_logger(logger_name, log_path):
     '''
@@ -287,9 +287,7 @@ def pretrain_generation(
                 input_values,
                 src_key_padding_mask=src_key_padding_mask,
                 batch_labels=None,
-                CLS=False,  # pretraining does not need CLS or CCE
-                MVC=False, 
-                ECS=False,
+                CLS=False  # pretraining does not need CLS or CCE
             )
             
             loss = 0.0
@@ -439,9 +437,8 @@ def generation_evaluate(
                 input_values,
                 src_key_padding_mask=src_key_padding_mask,
                 batch_labels=None,
-                CLS=False,  # pretraining does not need CLS or CCE
-                MVC=False, 
-                ECS=False,
+                CLS=False  # pretraining does not need CLS or CCE
+
             )
             
             loss = 0.0
@@ -615,9 +612,7 @@ def train(
                 batch_labels=batch_labels
                 if config.use_batch_labels or config.DSBN
                 else None,
-                CLS=config.CLS, 
-                MVC=config.GEPC, 
-                ECS=config.ESC,
+                CLS=config.CLS
             )
 
             loss = 0.0
@@ -842,9 +837,9 @@ def evaluate(
                     batch_labels=batch_labels
                     if config.use_batch_labels or config.DSBN
                     else None,
-                    CLS=config.CLS, # True or False
-                    MVC=config.GEPC, 
-                    ECS=config.ESC
+                    CLS=config.CLS # True or False
+                    # MVC=config.GEPC, 
+                    # ECS=config.ESC
                 )
                 
                 loss = 0.0
@@ -1000,8 +995,8 @@ def test(
                     if config.use_batch_labels or config.DSBN
                     else None,
                     CLS=config.CLS,  # evaluation does not need CLS or CCE
-                    MVC=False,
-                    ECS=False,
+                    # MVC=False,
+                    # ECS=False,
                 )
             
             with torch.cuda.amp.autocast(enabled=config.amp):
@@ -1128,8 +1123,8 @@ def inference(
                     if config.use_batch_labels or config.DSBN
                     else None,
                     CLS=config.CLS,  # evaluation does not need CLS or CCE
-                    MVC=False,
-                    ECS=False,
+                    # MVC=False,
+                    # ECS=False,
                 )
             
             with torch.cuda.amp.autocast(enabled=config.amp):

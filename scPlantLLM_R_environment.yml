@@ -1,0 +1,17 @@
+name: scPlantLLM_R_Env
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  - r-base=4.3.3       # 稳定 R 4.3
+  - r-seurat=4.4.0
+  - r-seuratobject=4.*
+  - r-matrix=1.6.5
+  - r-dplyr
+  - r-data.table
+  - hdf5>=1.14          # 不锁死具体小版本
+  - r-hdf5r
+  - bioconductor-rhdf5
+  - bioconductor-rhdf5filters
+  - bioconductor-rhdf5lib
