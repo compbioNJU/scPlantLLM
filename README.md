@@ -183,10 +183,10 @@ python preprocess_data.py \
 
 ### Stage 4: Inference & Downstream Analysis
 
-📄 **Tutorial.ipynb**  
+📄 **[Tutorial.ipynb](./Tutorial.ipynb)**  
 – Standard inference workflow.
 
-📄 **ZeroShot_Tutorial.ipynb**  
+📄 **[ZeroShot_Tutorial.ipynb](./ZeroShot_Tutorial.ipynb)**  
 – Zero-shot inference on **unseen datasets**, demonstrating the model’s generalization ability without additional training.
 
 
