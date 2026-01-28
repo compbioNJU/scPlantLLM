@@ -1,9 +1,3 @@
-Here is a polished, professional, and standardized version of your README. I have integrated the context from your paper (Abstract/Introduction) to make the project description more compelling and structured the technical steps for better readability.
-
-I have also inserted specific `` tags where diagrams would significantly help users understand the architecture and workflow, as per your system instructions.
-
----
-
 # scPlantLLM: A Foundation Model for Plant Single-Cell Expression Atlases
 
 **scPlantLLM** (Single-cell Plant Large Language Model) is a transformer-based foundation model designed to explore the complexity of plant single-cell RNA sequencing (scRNA-seq) data. Trained on millions of plant single-cell data points, specifically *Arabidopsis thaliana*, scPlantLLM treats single cells as "sentences" and genes as "words" to uncover intricate biological patterns.
@@ -14,7 +8,7 @@ By employing a sequential pretraining strategy with masked language modeling, sc
 
 * **Foundation Model Architecture:** Built on a Transformer architecture tailored for plant genomics.
 * **High-Resolution Analysis:** Excels in clustering and identifying subtle cellular subtypes.
-* **Zero-Shot Learning:** Achieves up to **0.91 accuracy** in zero-shot cell type annotation.
+* **Zero-Shot Learning:** zero-shot cell type annotation.
 * **Robust Integration:** effectively handles batch effects across diverse datasets.
 * **Interpretability:** Identifies biologically meaningful Gene Regulatory Networks (GRNs).
 
