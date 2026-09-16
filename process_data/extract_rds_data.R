@@ -65,6 +65,13 @@ for (file in file_list) {
   cat("Processing", file, "\n" )
   print("========================================================================================================")
   seurat_obj <- readRDS(file)
+
+  seurat_obj <- FindVariableFeatures(
+  seurat_obj,
+  selection.method = "vst",
+  nfeatures = kv,
+  verbose = FALSE
+  )
     
   # count data:
   gene_counts <- GetAssayData(object = seurat_obj, assay = "RNA", slot = "data")
