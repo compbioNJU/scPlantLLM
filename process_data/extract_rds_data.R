@@ -66,6 +66,7 @@ for (file in file_list) {
   print("========================================================================================================")
   seurat_obj <- readRDS(file)
 
+  seurat_obj <- NormalizeData(seurat_obj, verbose = FALSE)   # 如果还没归一化
   seurat_obj <- FindVariableFeatures(
   seurat_obj,
   selection.method = "vst",
